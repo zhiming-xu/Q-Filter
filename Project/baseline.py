@@ -5,6 +5,7 @@ import numpy as np
 import mxnet as mx
 from mxnet import nd, gluon, autograd
 import gluonnlp as nlp
+import pandas as pd
 
 random.seed(233)
 np.random.seed(2333)
@@ -54,7 +55,7 @@ epochs = 1
 grad_clip = None
 log_interval = 100
 
-context = mx.cpu()
+context = mx.cpu(0)
 
 lm_model, vocab = nlp.model.get_model(name=language_model_name,
                                       dataset_name='wikitext-2',
@@ -74,8 +75,54 @@ tokenizer = nlp.data.SpacyTokenizer('en')
 
 # length_clip takes as input a list and outputs a list with maximum length 500.
 length_clip = nlp.data.ClipSequence(500)
-
+'''
 def preprocess(x):
+    label = None
+    data = None
+    for d, l in x:
+        data += d
+        label += l
+    print(data[0], label[0], type(data), type(label))
+    # A token index or a list of token indices is
+    # returned according to the vocabulary.
+    data = vocab[length_clip(tokenizer(data))]
+    return data, label
+
+def get_length(x):
+    return float(len(x[0]))
+
+# Load the dataset
+train_dataset = pd.read_csv('train.csv', encoding='utf-8')
+test_dataset = pd.read_csv('test.csv', encoding='utf-8')
+train_dataset = train_dataset.iloc[:, [1, 2]]
+test_dataset = test_dataset.iloc[:, [1]]
+train_dataset = train_dataset.values.tolist()[1:200]
+test_dataset = test_dataset.values.tolist()[201:400]
+'''
+train_dataset, test_dataset = [nlp.data.IMDB(root='data/imdb', segment=segment)
+                               for segment in ('train', 'test')]
+'''
+print('Tokenize using spaCy...')
+def preprocess_dataset(dataset):
+    start = time.time()
+    # Each sample is processed in an asynchronous manner.
+    data, label = preprocess(dataset)
+    dataset = gluon.data.SimpleDataset(data, label)
+    lengths = gluon.data.SimpleDataset(get_length(dataset))
+    end = time.time()
+    print('Done! Tokenizing Time={:.2f}s, #Sentences={}'.format(end - start, len(dataset)))
+    return dataset, lengths
+'''
+def preprocess(x):
+    print(len(x))
+    print(len(x[0]))
+    print(len(x[0][0]))
+    print(len(x[0][0][0]))
+    print(type(x))
+    print(type(x[0]))
+    print(type(x[0][0]))
+    print(type(x[0][0][0]))
+    assert(0)
     data, label = x
     label = int(label > 5)
     # A token index or a list of token indices is
@@ -93,14 +140,13 @@ print('Tokenize using spaCy...')
 
 def preprocess_dataset(dataset):
     start = time.time()
-    with mp.Pool() as pool:
-        # Each sample is processed in an asynchronous manner.
-        dataset = gluon.data.SimpleDataset(pool.map(preprocess, dataset))
-        lengths = gluon.data.SimpleDataset(pool.map(get_length, dataset))
+    pool = mp.Pool()
+    # Each sample is processed in an asynchronous manner.
+    dataset = gluon.data.SimpleDataset(pool.map(preprocess, dataset))
+    lengths = gluon.data.SimpleDataset(pool.map(get_length, dataset))
     end = time.time()
     print('Done! Tokenizing Time={:.2f}s, #Sentences={}'.format(end - start, len(dataset)))
     return dataset, lengths
-
 # Preprocess the dataset
 train_dataset, train_data_lengths = preprocess_dataset(train_dataset)
 test_dataset, test_data_lengths = preprocess_dataset(test_dataset)
@@ -139,9 +185,9 @@ def evaluate(net, dataloader, context):
     start_log_interval_time = time.time()
     print('Begin Testing...')
     for i, ((data, valid_length), label) in enumerate(dataloader):
-        data = mx.nd.transpose(data)
-        valid_length = valid_length.astype(np.float32)
-        label = label
+        data = mx.nd.transpose(data.as_in_context(context))
+        valid_length = valid_length.as_in_context(context).astype(np.float32)
+        label = label.as_in_context(context)
         output = net(data, valid_length)
         L = loss(output, label)
         pred = (output > 0.5).reshape(-1)
@@ -185,8 +231,9 @@ def train(net, context, epochs):
             log_interval_sent_num += data.shape[1]
             epoch_sent_num += data.shape[1]
             with autograd.record():
-                output = net(data.T, length.astype(np.float32))
-                L = L + loss(output, label).mean()
+                output = net(data.as_in_context(context).T,\
+                         length.as_in_context(context).astype(np.float32))
+                L = L + loss(output, label.as_in_context(context)).mean()
             L.backward()
             # Clip gradient
             if grad_clip:
@@ -218,3 +265,4 @@ def train(net, context, epochs):
                   epoch_wc / 1000 / (end_epoch_time - start_epoch_time)))
 
 train(net, context, epochs)
+
