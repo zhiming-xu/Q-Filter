@@ -90,18 +90,18 @@ def preprocess(x):
 
 def get_length(x):
     return float(len(x[0]))
-
+'''
 # Load the dataset
-train_dataset = pd.read_csv('train.csv', encoding='utf-8')
-test_dataset = pd.read_csv('test.csv', encoding='utf-8')
-train_dataset = train_dataset.iloc[:, [1, 2]]
-test_dataset = test_dataset.iloc[:, [1]]
-train_dataset = train_dataset.values.tolist()[1:200]
-test_dataset = test_dataset.values.tolist()[201:400]
+train_data = pd.read_csv('train.csv', encoding='utf-8')
+test_data = pd.read_csv('test.csv', encoding='utf-8')
+train_data = train_data.iloc[:, [1, 2]]
+test_data = test_data.iloc[:, [1]]
+train_dataset = train_data.values.tolist()[1:12000]
+test_dataset = train_data.values.tolist()[12001:14000]
 '''
 train_dataset, test_dataset = [nlp.data.IMDB(root='data/imdb', segment=segment)
                                for segment in ('train', 'test')]
-'''
+
 print('Tokenize using spaCy...')
 def preprocess_dataset(dataset):
     start = time.time()
@@ -114,17 +114,8 @@ def preprocess_dataset(dataset):
     return dataset, lengths
 '''
 def preprocess(x):
-    print(len(x))
-    print(len(x[0]))
-    print(len(x[0][0]))
-    print(len(x[0][0][0]))
-    print(type(x))
-    print(type(x[0]))
-    print(type(x[0][0]))
-    print(type(x[0][0][0]))
-    assert(0)
     data, label = x
-    label = int(label > 5)
+    label = int(label==0)
     # A token index or a list of token indices is
     # returned according to the vocabulary.
     data = vocab[length_clip(tokenizer(data))]
@@ -133,9 +124,6 @@ def preprocess(x):
 def get_length(x):
     return float(len(x[0]))
 
-# Load the dataset
-train_dataset, test_dataset = [nlp.data.IMDB(root='data/imdb', segment=segment)
-                               for segment in ('train', 'test')]
 print('Tokenize using spaCy...')
 
 def preprocess_dataset(dataset):
@@ -147,6 +135,7 @@ def preprocess_dataset(dataset):
     end = time.time()
     print('Done! Tokenizing Time={:.2f}s, #Sentences={}'.format(end - start, len(dataset)))
     return dataset, lengths
+
 # Preprocess the dataset
 train_dataset, train_data_lengths = preprocess_dataset(train_dataset)
 test_dataset, test_data_lengths = preprocess_dataset(test_dataset)
