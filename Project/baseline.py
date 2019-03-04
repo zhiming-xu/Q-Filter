@@ -49,13 +49,13 @@ class SentimentNet(gluon.HybridBlock):
 dropout = 0
 language_model_name = 'standard_lstm_lm_200'
 pretrained = True
-learning_rate, batch_size = 0.005, 32
+learning_rate, batch_size = 0.003, 32
 bucket_num, bucket_ratio = 10, 0.2
 epochs = 1
 grad_clip = None
 log_interval = 100
 
-context = mx.cpu(0)
+context = mx.gpu()
 
 lm_model, vocab = nlp.model.get_model(name=language_model_name,
                                       dataset_name='wikitext-2',
@@ -74,7 +74,7 @@ print(net)
 tokenizer = nlp.data.SpacyTokenizer('en')
 
 # length_clip takes as input a list and outputs a list with maximum length 500.
-length_clip = nlp.data.ClipSequence(500)
+length_clip = nlp.data.ClipSequence(100)
 '''
 def preprocess(x):
     label = None
@@ -93,11 +93,9 @@ def get_length(x):
 '''
 # Load the dataset
 train_data = pd.read_csv('train.csv', encoding='utf-8')
-test_data = pd.read_csv('test.csv', encoding='utf-8')
 train_data = train_data.iloc[:, [1, 2]]
-test_data = test_data.iloc[:, [1]]
-train_dataset = train_data.values.tolist()[1:12000]
-test_dataset = train_data.values.tolist()[12001:14000]
+train_dataset = train_data.values.tolist()[20001:1020001]
+test_dataset = train_data.values.tolist()[1:20001]
 '''
 train_dataset, test_dataset = [nlp.data.IMDB(root='data/imdb', segment=segment)
                                for segment in ('train', 'test')]
@@ -115,7 +113,7 @@ def preprocess_dataset(dataset):
 '''
 def preprocess(x):
     data, label = x
-    label = int(label==0)
+    label = int(label==1)
     # A token index or a list of token indices is
     # returned according to the vocabulary.
     data = vocab[length_clip(tokenizer(data))]
@@ -171,6 +169,8 @@ def evaluate(net, dataloader, context):
     total_L = 0.0
     total_sample_num = 0
     total_correct_num = 0
+    true_pos = 0
+    false_neg = 0
     start_log_interval_time = time.time()
     print('Begin Testing...')
     for i, ((data, valid_length), label) in enumerate(dataloader):
@@ -181,6 +181,11 @@ def evaluate(net, dataloader, context):
         L = loss(output, label)
         pred = (output > 0.5).reshape(-1)
         total_L += L.sum().asscalar()
+        for i in range(label.shape[0]):
+            if label[i]==1 and pred[i]==1:
+                true_pos += 1
+            if label[i]==1 and pred[i]==0:
+                false_neg += 1
         total_sample_num += label.shape[0]
         total_correct_num += (pred == label).sum().asscalar()
         if (i + 1) % log_interval == 0:
@@ -190,7 +195,9 @@ def evaluate(net, dataloader, context):
             start_log_interval_time = time.time()
     avg_L = total_L / float(total_sample_num)
     acc = total_correct_num / float(total_sample_num)
-    return avg_L, acc
+    recall = float(true_pos) / (true_pos + false_neg)
+    print('true_pos:', true_pos, 'false_neg', false_neg)
+    return avg_L, acc, recall
 
 def train(net, context, epochs):
     trainer = gluon.Trainer(net.collect_params(), 'ftml',
@@ -247,10 +254,10 @@ def train(net, context, epochs):
                 log_interval_sent_num = 0
                 log_interval_L = 0
         end_epoch_time = time.time()
-        test_avg_L, test_acc = evaluate(net, test_dataloader, context)
+        test_avg_L, test_acc, test_recall = evaluate(net, test_dataloader, context)
         print('[Epoch {}] train avg loss {:.6f}, test acc {:.2f}, '
-              'test avg loss {:.6f}, throughput {:.2f}K wps'.format(
-                  epoch, epoch_L / epoch_sent_num, test_acc, test_avg_L,
+              'test recall {:.2f}, test avg loss {:.6f}, throughput {:.2f}K wps'.format(
+                  epoch, epoch_L / epoch_sent_num, test_acc, test_recall, test_avg_L,
                   epoch_wc / 1000 / (end_epoch_time - start_epoch_time)))
 
 train(net, context, epochs)
