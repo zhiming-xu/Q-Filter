@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% block content %}
+        <article class="media content-section">
+          <div class="media-body">
+            <div class="article-metadata">
+              <a class="mr-2" href="#">{{ posts.author }}</a>
+            </div>
+            <h2><a class="article-title" href="#">{{ posts.question }}</a></h2>
+            <p class="article-content"><b>Your Opinion: </b>{{ posts.opinion }} </p>
+            <p class="article-content"><b>Our BERT Test Result: </b>{{ posts.resultBERT }} </p>
+              <p class="article-content"><b>Our textCNN Test Result: </b>{{ posts.resultCNN }} </p>
+          </div>
+        </article>
+{% endblock content %}
