@@ -8,7 +8,8 @@ posts = {
         'title': 'Type in Your Question',
         'question': '',
         'opinion': '',
-        'result': ''
+        'resultBERT': '',
+        'resultCNN': ''
 }
 
 
@@ -23,7 +24,8 @@ def my_form_post():
     text = request.form['question']
     processed_text = text.capitalize()
     posts['question'] = processed_text
-    posts['result'] = test.test(processed_text)
+    posts['resultBERT'] = test.testBERT(processed_text)
+    posts['resultCNN'] = test.testCNN(processed_text)
     posts['opinion'] = request.form['opinion'].capitalize()
     return render_template('home2.html', posts=posts)
 
