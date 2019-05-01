@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% block content %}
+        <article class="media content-section">
+          <div class="media-body">
+            <div class="article-metadata">
+              <a class="mr-2" href="#">{{ posts.author }}</a>
+            </div>
+            <h2><a class="article-title" href="#">{{ posts.title }}</a></h2>
+              <form action="" method="POST">
+                Your Question: <input type="text" name="question"><br>
+                Your Opinion on it: <input type="text" name="opinion"><br>
+                <input type="submit" value="Submit">
+              </form>
+          </div>
+        </article>
+{% endblock content %}
