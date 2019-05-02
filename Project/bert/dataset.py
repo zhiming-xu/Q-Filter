@@ -384,7 +384,7 @@ class QuoraDataset(GLUEDataset):
         elif segment == 'test':
             A_IDX = 1
             fields = [A_IDX]
-        super(SSTDataset, self).__init__(
+        super(QuoraDataset, self).__init__(
             path, num_discard_samples=1, fields=fields)
 
     @staticmethod
@@ -581,6 +581,7 @@ class BERTDatasetTransform(object):
         np.array: classification task: label id in 'int32', shape (batch_size, 1),
             regression task: label in 'float32', shape (batch_size, 1)
         """
+        assert(0)
         input_ids, valid_length, segment_ids = self._bert_xform(line[:-1])
 
         label = line[-1]

@@ -86,51 +86,61 @@ from gluonnlp.model import get_bert_model
 from gluonnlp.data import BERTTokenizer, BERTSentenceTransform
 from bert import BERTClassifier
 from dataset import QuoraDataset
+import d2l
 
-ctx = mx.cpu()
+ctx = d2l.try_gpu()
 
 # this function will take sentences (a tuple of strings) and other
 # supporting data as input, transform the sentences into data that
 # can be fed into bert model for prediction
-def bert_transform(sentences, tokenizer, max_seq_length, \
+
+def bert_transform(sentence, tokenizer, max_seq_length, \
                    pad=True, pair=True):
     bert_trans = BERTSentenceTransform(tokenizer, max_seq_length,\
                                        pad=pad, pair=pair)
-    input_ids, valid_length, segment_ids = bert_trans(sentences[:-1])
+    input_ids, valid_length, segment_ids = bert_trans(sentence)
 
     return input_ids, valid_length, segment_ids
 
 # this is the interface to interact with bert model, take a tuple of
 # sentences (strings) as input, this function should return the prediction
 # for each of them
-def predict_bert(sentences):
-    bert, vocabulary = nlp.model.get_model('bert_12_768_12',
-                                           dataset_name='book_corpus_wiki_en_uncased',
-                                           pretrained=False,
-                                           ctx=ctx,
-                                           use_pooler=False,
-                                           use_decoder=False,
-                                           use_classifier=False)
+# FIXME: FOR NOW, IT CAN ONLY TAKE IN A LIST, WHOSE ELEMENT IS `ONE`
+# STRING, i.e. ['some string in this field'], AND RETURN 1 IFF INSINCERE
 
-    model = BERTClassifier(\
-            bert, dropout=.1, num_classes=len(QuoraDataset.get_labels())
-            )
-    model.hybridize(static_alloc=True)
-    model.load_parameters('./model_bert_Quora_3.params', ctx=ctx, ignore_extra=True)
-    bert.cast('float32')
+# this part is from original finetune_classfier file
+bert, vocabulary = nlp.model.get_bert_model(model_name='bert_12_768_12', \
+                   dataset_name='book_corpus_wiki_en_uncased', \
+                   pretrained=True, ctx=ctx, use_pooler=True, \
+                   use_decoder=False, use_classifier=False)
 
-    tokenizer = nlp.data.BERTTokenizer(vocabulary, lower=True)
-    max_seq_length = max([len(sentence) for sentence in sentences])
+model = BERTClassifier(\
+        bert, dropout=.1, num_classes=len(QuoraDataset.get_labels())
+        )
+model.load_parameters('model_bert_Quora_3.params', ctx=ctx)
+model.hybridize(static_alloc=True)
+ 
+# from here in finetune_classfier/preprocess_data 
+tokenizer = nlp.data.BERTTokenizer(vocabulary, lower=True)
+max_seq_length = 32
 
+def predict_bert(sentence):
+ 
+    # [FIXED] this function's ouput is wrong, it does not return word embedding
+    # the bug is fixed, we need to set the input size to be batch_size * valid_length
+    # i.e. (8, 32) to make this model work because it's trained this way
     inputs_ids, valid_length, type_ids = \
-        bert_transform(sentences, tokenizer, max_seq_length, \
-                       pad=False, pair=False)
-    inputs_ids = nd.array(inputs_ids)
-    valid_length = nd.array(valid_length)
-    type_ids = nd.array(type_ids)
-    out = model(inputs_ids.as_in_context(ctx), type_ids.as_in_context(ctx),\
-                valid_length.as_in_context(ctx))
-    print(out)
-    return out
+        bert_transform(sentence, tokenizer, max_seq_length, \
+                       pad=True, pair=False)
 
-predict_bert(('this is a sentence', 'this is also a sentence'))
+    # since for now we only take one sentence, we need to repeat it for 8 times,
+    # each time produces exactly same result
+    inputs_ids = nd.repeat(nd.array(inputs_ids).reshape(1, -1), repeats=8, axis=0)
+    valid_length = nd.ones(8) * int(valid_length)
+    type_ids = nd.repeat(nd.array(type_ids).reshape(1, -1), repeats=8, axis=0)
+    out = model(inputs_ids.as_in_context(ctx).astype('int32'), \
+                type_ids.as_in_context(ctx).astype('int32'), \
+                valid_length.as_in_context(ctx).astype('float32'))
+    # the out array is in the form of batch_size * num_classes, i.e. (8, 2)
+    # since each row is the same, we only extract the first row and do argmax
+    return out[0].argmax(axis=0)
