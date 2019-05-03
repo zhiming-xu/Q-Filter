@@ -146,4 +146,4 @@ def predict_bert(sentence):
                 valid_length.as_in_context(ctx).astype('float32'))
     # the out array is in the form of batch_size * num_classes, i.e. (8, 2)
     # since each row is the same, we only extract the first row and do argmax
-    return out[0].argmax(axis=0)
+    return out[0].argmax(axis=0).asscalar()
