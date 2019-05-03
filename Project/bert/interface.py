@@ -32,6 +32,8 @@ from nltk import word_tokenize
 import pandas as pd
 import re
 
+ctx = d2l.try_gpu()
+
 '''
 The following is the function for textCNN
 '''
@@ -64,16 +66,16 @@ class TextCNN(nn.Block):
         return outputs
 
 
-def testCNN(sentence):
+def predict_cnn(sentence):
     embed_size, kernel_sizes, nums_channels = 100, [3, 4, 5], [100, 100, 100]
     vocab = d2l.get_vocab_imdb(sentence)
     net = TextCNN(vocab, embed_size, kernel_sizes, nums_channels)
 
-    net.load_parameters('textCNN.params', ctx=mx.cpu())
+    net.load_parameters('textCNN.params', ctx=ctx)
 
     sentence_ = re.sub("[^a-zA-Z]", " ", sentence)
     sentence_new = sentence_.split()
-    sentence_new = nd.array(vocab.to_indices(sentence_new), ctx=mx.cpu())
+    sentence_new = nd.array(vocab.to_indices(sentence_new), ctx=ctx)
     label = nd.argmax(net(sentence_new.reshape((1, -1))), axis=1)
     return 'Bad guy detected!! Report to us?' if label.asscalar() == 1 else 'Not bad :)'
 
@@ -86,9 +88,6 @@ from gluonnlp.model import get_bert_model
 from gluonnlp.data import BERTTokenizer, BERTSentenceTransform
 from bert import BERTClassifier
 from dataset import QuoraDataset
-import d2l
-
-ctx = d2l.try_gpu()
 
 # this function will take sentences (a tuple of strings) and other
 # supporting data as input, transform the sentences into data that
@@ -124,6 +123,10 @@ model.hybridize(static_alloc=True)
 tokenizer = nlp.data.BERTTokenizer(vocabulary, lower=True)
 max_seq_length = 32
 
+# this function takes in exactly one sentence and predict for it,
+# note that the input should be a list containing only one string
+# i.e. ['question we want to predict']. it returns 1 iff. insincere,
+# returns 0 otherwise
 def predict_bert(sentence):
  
     # [FIXED] this function's ouput is wrong, it does not return word embedding
