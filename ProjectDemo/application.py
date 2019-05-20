@@ -11,8 +11,9 @@ posts = {
         'resultCNN': ''
 }
 
+from interface import predict_bert
 try:
-    from interface import predict_bert
+    from interface import predict_text_cnn
 except IOError:
     posts['author'] = 'An error occured trying to read the file.'
    
@@ -20,7 +21,7 @@ except ImportError:
     posts['author'] = "NO module found"
   
 except:
-    posts['author'] = 'error occur when loading model'
+    posts['author'] = 'Error occur when loading model'
 
 @app.route("/")
 @app.route("/home")
@@ -39,6 +40,9 @@ def my_form_post():
         processed_text = posts['question']
     posts['resultBERT'] = "Bad question" \
                           if predict_bert([processed_text]) == 1 \
+                          else "Valuable question"
+    posts['resultCNN'] = "Bad question" \
+                          if predict_text_cnn(processed_text) == 1 \
                           else "Valuable question"
     posts['opinion'] = request.form['opinion'].capitalize()
     return render_template('home2.html', posts=posts)
