@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.14159265-2.6-0.99999 (MiKTeX 2.9.6630 64-bit) (preloaded format=xelatex 2018.9.19)  19 MAY 2019 09:26
+This is XeTeX, Version 3.14159265-2.6-0.99999 (MiKTeX 2.9.6630 64-bit) (preloaded format=xelatex 2018.9.19)  19 MAY 2019 10:25
 entering extended mode
 **"./STAT 157 Group 1 Project Report.tex"
 ("STAT 157 Group 1 Project Report.tex"
@@ -457,6 +457,13 @@ Missing character: There is no ’ in font ptmr8t!
  [2]
 File: flow.png Graphic file (type bmp)
 <flow.png>
+File: bert.png Graphic file (type bmp)
+<bert.png>
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[3]
 File: demo1.png Graphic file (type bmp)
 <demo1.png>
 Missing character: There is no ‘ in font ptmr8t!
@@ -465,9 +472,13 @@ Missing character: There is no ‘ in font ptmr8t!
 Missing character: There is no ’ in font ptmr8t!
 Missing character: There is no ‘ in font ptmr8t!
 Missing character: There is no ’ in font ptmr8t!
- [3]
 File: demo2.png Graphic file (type bmp)
 <demo2.png>
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[4]
 File: acc.png Graphic file (type bmp)
 <acc.png>
 Missing character: There is no ‘ in font ptmr8t!
@@ -486,7 +497,6 @@ Missing character: There is no ‘ in font ptmr8t!
 Missing character: There is no ’ in font ptmr8t!
 Missing character: There is no ‘ in font ptmr8t!
 Missing character: There is no ’ in font ptmr8t!
- [4]
 Missing character: There is no ‘ in font ptmr8t!
 Missing character: There is no ’ in font ptmr8t!
 Missing character: There is no ‘ in font ptmr8t!
@@ -497,36 +507,35 @@ Missing character: There is no “ in font ptmr8t!
 Missing character: There is no ’ in font ptmr8t!
 Missing character: There is no ‘ in font ptmr8t!
 Missing character: There is no ’ in font ptmr8t!
-Missing character: There is no ’ in font ptmr8t!
-Missing character: There is no ’ in font ptmr8t!
-Missing character: There is no ‘ in font ptmr8t!
-Missing character: There is no ’ in font ptmr8t!
-Missing character: There is no ‘ in font ptmr8t!
-Missing character: There is no ’ in font ptmr8t!
 
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
  [5]
 Missing character: There is no ‘ in font ptmr8t!
 Missing character: There is no ’ in font ptmr8t!
-LaTeX Font Info:    Font shape `T1/ptm/bx/n' in size <9> not available
-(Font)              Font shape `T1/ptm/b/n' tried instead on input line 138.
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 148.
+Missing character: There is no ‘ in font ptmr8t!
+Missing character: There is no ’ in font ptmr8t!
 
 [6]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 148.
+Missing character: There is no ‘ in font ptmr8t!
+Missing character: There is no ’ in font ptmr8t!
+LaTeX Font Info:    Font shape `T1/ptm/bx/n' in size <9> not available
+(Font)              Font shape `T1/ptm/b/n' tried instead on input line 152.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 162.
+ [7]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 162.
  ("STAT 157 Group 1 Project Report.aux")
-Package atveryend Info: Empty hook `AtVeryEndDocument' on input line 148.
-Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 148.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 148.
+Package atveryend Info: Empty hook `AtVeryEndDocument' on input line 162.
+Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 162.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 162.
  ) 
 Here is how much of TeX's memory you used:
- 10474 strings out of 427836
- 151139 string characters out of 3152479
- 258018 words of memory out of 3000000
- 14355 multiletter control sequences out of 15000+200000
+ 10479 strings out of 427836
+ 151194 string characters out of 3152479
+ 258060 words of memory out of 3000000
+ 14359 multiletter control sequences out of 15000+200000
  23769 words of font info for 34 fonts, out of 3000000 for 9000
  1328 hyphenation exceptions out of 8191
- 31i,8n,45p,2289b,358s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 31i,8n,45p,1223b,358s stack positions out of 5000i,500n,10000p,200000b,50000s
 
-Output written on STAT 157 Group 1 Project Report.pdf (6 pages).
+Output written on STAT 157 Group 1 Project Report.pdf (7 pages).

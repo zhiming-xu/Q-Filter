@@ -60,15 +60,27 @@ We processed our data to fit into our models. First, we cleaned up irregularitie
 \section{Model}
 \subsection{Model Construction}
 
-In order to build our model, we first consider simple RNN structure with LSTM cells. We choose glove 300d trained on Wikipedia as word embeddings. After converting samples in our data into vectors, we feed them into two layer of LSTM cells, and connect the outputs of the second layer to a final dense layer to produce two dimension classification of this sample. The method is quite straightforward, but it does not prove to be useful. After training on 700k labeled samples, we have achieved 94\% accuracy. However, since the positive samples take over ~95\% of whole training data, we suspect that this vanilla model in fact does not really distinguish good questions from bad ones. Hence, we use the 200k held-out data to verify our assumption. Of all ~10k bad samples, it only captures very few of them. Therefore, we switch to more complicated models. For efficient training, we deploy TextCNN as our new model, which treats text information alike image information. After vectorizing the word, since each word corresponds to a one dimension array, a sentence is encoded as a two dimension matrix. Intuitively, we can do convolution on this matrix as we typically do to an image. However, we must pay attention that truncated word vector do not make much sense. Hence the convolution layer should on one dimension, taking all the entries of one particular word's embedding into account, and on the other dimension, including one or several continuing words in a sample to abstract their combining meanings. We use multiple such convolution layers to capture the meaning of different word bags and connecting the results to a final dense layer to obtain the predictions. TextCNN proves to be more useful than simple two-layer LSTM, with an increasing of accuracy to ~95\%, indicating that it is able to recognize some insincere contents. Apart from these two models, we exploit BERT for pretraining and feature extraction. Due to computation power and memory limit, we choose to use BERT base 768d trained on Wiki texts as our encoder. After tokenizing and feeding our samples into BERT, it will produce a 768d vectors representing the extracted information, which is then connected to the final output layer to obtain the binary predictions.
+In order to build our model, we first consider simple RNN structure with LSTM cells. We choose glove 300d trained on Wikipedia as word embeddings. After converting samples in our data into vectors, we feed them into two layer of LSTM cells, and connect the outputs of the second layer to a final dense layer to produce two dimension classification of this sample. The method is quite straightforward, but it does not prove to be useful. After training on 700k labeled samples, we have achieved 94\% accuracy. However, since the positive samples take over ~95\% of whole training data, we suspect that this vanilla model in fact does not really distinguish good questions from bad ones. Hence, we use the 200k held-out data to verify our assumption. Of all ~10k bad samples, it only captures very few of them. Therefore, we switch to more complicated models. 
+
+For efficient training, we deploy TextCNN as our new model, which treats text information alike image information. After vectorizing the word, since each word corresponds to a one dimension array, a sentence is encoded as a two dimension matrix. Intuitively, we can do convolution on this matrix as we typically do to an image. However, we must pay attention that truncated word vector do not make much sense. Hence the convolution layer should on one dimension, taking all the entries of one particular word's embedding into account, and on the other dimension, including one or several continuing words in a sample to abstract their combining meanings. We use multiple such convolution layers to capture the meaning of different word bags and connecting the results to a final dense layer to obtain the predictions. TextCNN proves to be more useful than simple two-layer LSTM, with an increasing of accuracy to ~95\%, indicating that it is able to recognize some insincere contents. 
 
 \begin{figure}[h!]
 	\centering
 	\includegraphics[scale=0.4]{flow.png}
-	\caption{TextCNN Model}
+	\caption{TextCNN Classifier}
 	\label{fig:flow}
 \end{figure}
 
+Apart from these two models, we exploit BERT for pretraining and feature extraction, which uses multiple layers of position-wise feed forward network multi-head self-attention to capture features in language. Due to computation power and memory limit, we choose to use BERT base 768d trained on Wiki texts as our encoder. After tokenizing and feeding our samples into BERT, it will produce a 768d vectors representing the extracted information, which is then connected to the final output layer to obtain the binary predictions.
+
+\begin{figure}[h!]
+	\centering
+	\includegraphics[scale=0.5]{bert.png}
+	\caption{BERT Classifier}
+	\label{fig:bert}
+\end{figure}
+
+\newpage
 \subsection{Demonstration}
 The website used for demonstration is run on free-tier AWS service site. It is implemented using prediction interfaces provided in both models and create embeddings for each sentences based on the vocabulary built for each model, as shown in Figure~\ref{fig:demo1}.
 
@@ -88,7 +100,7 @@ In our demonstration, we showcased a couple of odd limitations as well as some p
 	\label{fig:demo2}
 \end{figure}
 
-There are also cases where the BERT and TextCNN models produce opposing answers. Usually, the TextCNN model produces better answers for generalization questions while BERT fails to recognize a generalized question. A possible solution for this problem is to have multiple models with different volumes of datasets to best determine if the question is valuable or not valuable. We can use the average of multiple models to predict an accurate analysis for these questions. 
+There are also cases where the BERT and TextCNN models produce opposing answers. Usually, the TextCNN model produces better answers for generalization questions while BERT fails to recognize a generalized question. A possible solution for this problem is to have multiple models with different volumes of datasets to best determine if the question is valuable or not valuable. We can use the average of multiple models to predict an accurate analysis for these questions.
 
 \section{Performance}
 As mentioned in the introduction section, the model is valid only when the test accuracy is greater than or equal to 95\% considering that of the large portion of sincere questions. It could be concluded directly from the performance metrics that as a baseline model, a 2-layer LSTM is doing nothing more than guessing while TextCNN and BERT shows effectiveness. BERT outperforms TextCNN with respect to the test accuracy and reached a test accuracy of 98\%. We can view the result in Table~\ref{fig:acc}
@@ -108,8 +120,10 @@ In addition, the nature of human language proposed certain limitations. For exam
 
 
 
-\section{Future Improvements and Usage}
-In order to evolve the capabilities and versatility of TextCNN and BERT models, the first step is to add the analysis of sentences to our models. While Quora’s initial contact is based off of a question, all comments that come after are in the format of sentences. Therefore, having sentence analysis is crucial to our model having full coverage of any online forum, post, or blog. A possible product that we can incorporate this functionality is CloudFlare. CloudFlare provides websites with spam protection and constant caching. By implementing deep learning models within CloudFlare, CloudFlare’s users can create a more valuable platform based off of meaningful comments. 
+\section{Improvements and Future Usage}
+To deal with the unexpected learned pattern of our BERT model, we try different solutions. First, we introduce some "noises", which are comments from Reddit to help the model less concentrate on the specially order of interrogative sentences. The experiment includes thousands of such comments as samples. Our result shows that this method does not have too much effect, and the model still often fails to detect an insincere declarative sentences as before. It is probably because the newly introduced samples only take up a small portion of training data and do not have a large influence on our model. Then we try to remove the question mark in training samples, which reduces accuracy of 0.3\% but proves to be more helpful for generalizing this model to common sentences. The accuracy for detecting such samples increase largely.
+
+In order to evolve the capabilities and versatility of TextCNN and BERT models,  we can also add the analysis of sentences to our models. While Quora's initial contact is based off of a question, all comments that come after are in the format of sentences. Therefore, having sentence analysis is crucial to our model having full coverage of any online forum, post, or blog. A possible product that we can incorporate this functionality is CloudFlare. CloudFlare provides websites with spam protection and constant caching. By implementing deep learning models within CloudFlare, CloudFlare's users can create a more valuable platform based off of meaningful comments. 
 
 From there, we want to incorporate spoiler detection for online forums like Reddit. For example, when there is a Game of Thrones post with the tag ‘No Spoilers’, the system flags that and starts filtering out comments that have spoilers. For the training dataset, we can use multiple Game of Thrones Wikipedias so that the model has real-time qualifiable data. Furthermore, we need an incredible amount of processing power for this because these type of threads are usually posted within seconds of an episode airing. Another use case for this feature is for sports games so that people who have not watched the game can safely browse the internet without the fear of spoiling the game. Another type of internet company that can utilize this technology is any internet browser company. This piece of technology would allow them to filter out custom content for customer profiles of internet users.
 
@@ -143,6 +157,6 @@ Conclusion of contributions: The topic is chosen by Zhaorui. Everyone in this te
 
 \textbf{Liang}: Collaborated with Zhiming for the demonstration website and designed the PowerPoint slides for both the introduction and the final presentation. Contributed to the final presentation. Collaborated with Luyu for the final report drafting and formatting. 
 
-\textbf{Zhiming}: Experiment on LSTM to obtain preliminary results. Prepare for proposal slides, and present at midterm. Discuss new ideas and models to improve our model, i.e., TextCNN and BERT with other teammates. Adjust BERT pretraining to suit our task, train it and write the interface for demonstration. Help Luyu and Liang maintain demo website and integrate full results into it. Write about model and usage limitation for final slides. %Experiment on limitation and propose potential methods to resolve them.
+\textbf{Zhiming}: Experiment on LSTM to obtain preliminary results. Prepare for proposal slides, and present at midterm. Discuss new ideas and models to improve our model, i.e., TextCNN and BERT with other teammates. Adjust BERT pretraining to suit our task, train it and write the interface for demonstration. Help Luyu and Liang maintain demo website and integrate full results into it. Write about model and usage limitation for final slides. Experiment on limitation and propose potential methods to resolve them.
 
 \end{document}
